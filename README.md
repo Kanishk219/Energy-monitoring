@@ -95,6 +95,4 @@ npm start  # Run React frontend
 
 ---
 
-## 📝 License
-This project is **MIT Licensed**.
 
