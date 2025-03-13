@@ -1,40 +1,68 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { Line } from "react-chartjs-2";
+import { Chart, registerables } from "chart.js";
 import "./Energyusage.css";
 
+Chart.register(...registerables);
+
 const EnergyUsage = () => {
-    const [data, setData] = useState([]);
+  const [energyData, setEnergyData] = useState([]);
 
-    useEffect(() => {
-        fetch("http://localhost:5000/api/energy") // Ensure this matches your backend route
-            .then(response => response.json())
-            .then(data => setData(data))
-            .catch(error => console.error("Error fetching data:", error));
-    }, []);
+  // Fetch data from backend
+  useEffect(() => {
+    axios.get("http://localhost:5000/api/energy")
+      .then((response) => {
+        console.log("Fetched data:", response.data);
+        setEnergyData(response.data);
+      })
+      .catch((error) => console.error("Error fetching data:", error));
+  }, []);
 
-    return (
-        <div>
-            <h1>Smart Home Energy Monitoring</h1>
-            <h2>Energy Usage Data</h2>
-            <table className="energy-table">
-                <thead>
-                    <tr>
-                        <th>Device</th>
-                        <th>Energy Consumed (kWh)</th>
-                        <th>Timestamp</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {data.map((item, index) => (
-                        <tr key={index}>
-                            <td>{item.device}</td>
-                            <td>{item.energyConsumed}</td>
-                            <td>{new Date(item.timestamp).toLocaleString()}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-    );
+  // Prepare chart data
+  const chartData = {
+    labels: energyData.map((entry) => new Date(entry.timestamp).toLocaleTimeString()),
+    datasets: [
+      {
+        label: "Energy Consumption (kWh)",
+        data: energyData.map((entry) => entry.energyConsumed),
+        backgroundColor: "rgba(75, 192, 192, 0.2)",
+        borderColor: "rgba(75, 192, 192, 1)",
+        borderWidth: 2,
+        fill: true,
+      },
+    ],
+  };
+
+  return (
+    <div className="energy-container">
+      <h1>Energy Consumption Data</h1>
+
+      {/* Table */}
+      <table className="energy-table">
+        <thead>
+          <tr>
+            <th>Device</th>
+            <th>Energy Consumed (kWh)</th>
+            <th>Timestamp</th>
+          </tr>
+        </thead>
+        <tbody>
+          {energyData.map((entry, index) => (
+            <tr key={index}>
+              <td>{entry.device}</td>
+              <td>{entry.energyConsumed}</td>
+              <td>{new Date(entry.timestamp).toLocaleString()}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* Chart */}
+      <h2>Energy Consumption Over Time</h2>
+      {energyData.length > 0 ? <Line data={chartData} /> : <p>Loading chart...</p>}
+    </div>
+  );
 };
 
 export default EnergyUsage;
